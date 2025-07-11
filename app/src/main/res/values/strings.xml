@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App Name -->
+    <string name="app_name">Crunchyroll Watcher</string>
+
+    <!-- Main Activity -->
+    <string name="search_hint">Search anime...</string>
+    <string name="search_button">Search</string>
+    <string name="no_anime_found">No anime found</string>
+    <string name="try_searching">Try searching for your favorite anime</string>
+    <string name="loading">Loading...</string>
+
+    <!-- Anime Item -->
+    <string name="add_to_watchlist">Add to Watchlist</string>
+    <string name="continue_watching">Continue Watching</string>
+    <string name="completed">Completed</string>
+    <string name="episodes_format">%d episodes</string>
+    <string name="rating_format">★ %.1f</string>
+    <string name="progress_format" formatted="false">%d/%d</string>
+
+    <!-- Status -->
+    <string name="status_ongoing">Ongoing</string>
+    <string name="status_completed">Completed</string>
+    <string name="status_upcoming">Upcoming</string>
+    <string name="status_cancelled">Cancelled</string>
+
+    <!-- Messages -->
+    <string name="enter_search_term">Please enter a search term</string>
+    <string name="error_loading_anime">Failed to load anime</string>
+    <string name="error_search_failed">Search failed</string>
+    <string name="anime_clicked">Clicked: %s</string>
+
+    <!-- Navigation -->
+    <string name="home">Home</string>
+    <string name="watchlist">Watchlist</string>
+    <string name="favorites">Favorites</string>
+    <string name="settings">Settings</string>
+
+    <!-- Accessibility -->
+    <string name="anime_image_description">Anime poster image</string>
+    <string name="search_icon_description">Search anime</string>
+    <string name="back_button_description">Go back</string>
+    <string name="menu_button_description">Open menu</string>
+
+    <!-- Common -->
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="retry">Retry</string>
+    <string name="refresh">Refresh</string>
+    <string name="loading_more">Loading more...</string>
+</resources>

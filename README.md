@@ -1,3 +1,17 @@
+# Author's Note
+Used this as a test of where LLM based coding (vibe-coding) was at in a scenario where I was not familiar with the technology.
+Everything besides this note (including the remainder of the Readme) was output from Claude
+This is test 2 of 2, see the other 'vibe' named branch for the other test.
+
+Android studio templated project called "Crunchyroll Watcher"
+	- Prompted ```create a basic android app in kotlin```
+	- Claude updated the templated code
+	- Claude fixed all code build issues
+	- Claude added .gitignore unprompted (even though there wasn't a git repo initialised in the directory)
+	- It used 35k/200k allotment from Claude (as provided by [Zed](https://zed.dev))
+	- Claude didn't use the context of Crunchyroll to do anything domain orientated with the base project, just added some simple elements
+
+
 # Basic Android App
 
 A comprehensive Android application built with Kotlin and Jetpack Compose, demonstrating modern Android development practices and architecture patterns.

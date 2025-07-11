@@ -1,3 +1,19 @@
+# Author's Note
+Used this as a test of where LLM based coding (vibe-coding) was at in a scenario where I was not familiar with the technology.
+Everything besides this note (including the remainder of the Readme) was output from Claude
+This is test 1 of 2, see the other 'vibe' named branch for the other test.
+
+- Started with an empty project called "Crunchyroll Watcher"
+	- Prompted ```create a basic android app in kotlin```
+	- Claude made the app including functionality
+	- It didn't test the Gradle build, which didn't work as it was incorrectly configured
+	- I manually attempted to fix using Android Studio suggestions
+	- Then I told Claude to fix it
+	- Claude Fixed gradle (eventually)
+	- Then I prompted for .gitignore
+	- It used 63k/200k allotment from Claude (as provided by [Zed](https://zed.dev))
+	- Claude knew what "Crunchyroll" was for, and added some elements in line with an expected usage
+
 # Crunchyroll Watcher
 
 A modern Android application built with Kotlin for tracking and managing your anime watchlist. This app provides a clean, intuitive interface to discover popular anime, search for specific titles, and keep track of your viewing progress.

@@ -1,0 +1,54 @@
+<resources>
+    <string name="app_name">Basic Android App</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_profile">Profile</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- Home Screen -->
+    <string name="welcome_title">Welcome to Your App!</string>
+    <string name="welcome_description">This is a basic Android app built with Kotlin and Jetpack Compose</string>
+    <string name="interactive_counter">Interactive Counter</string>
+    <string name="recent_activities">Recent Activities</string>
+    <string name="button_reset">Reset</string>
+
+    <!-- Profile Screen -->
+    <string name="profile_name">John Doe</string>
+    <string name="profile_job">Android Developer</string>
+    <string name="profile_projects">Projects</string>
+    <string name="profile_experience">Experience</string>
+    <string name="profile_skills">Skills</string>
+    <string name="profile_projects_count">12</string>
+    <string name="profile_experience_years">3 Years</string>
+    <string name="profile_skills_kotlin">Kotlin</string>
+    <string name="edit_profile">Edit Profile</string>
+
+    <!-- Settings Screen -->
+    <string name="settings_preferences">Preferences</string>
+    <string name="settings_dark_mode">Dark Mode</string>
+    <string name="settings_dark_mode_desc">Toggle dark theme</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_notifications_desc">Receive push notifications</string>
+    <string name="settings_about">About</string>
+    <string name="app_version">Version 1.0.0</string>
+    <string name="app_description">A demonstration of basic Android app features using Jetpack Compose and Kotlin.</string>
+
+    <!-- Activities -->
+    <string name="activity_profile_updated">Profile Updated</string>
+    <string name="activity_profile_updated_desc">Changed profile information</string>
+    <string name="activity_new_message">New Message</string>
+    <string name="activity_new_message_desc">Received a new notification</string>
+    <string name="activity_app_launched">App Launched</string>
+    <string name="activity_app_launched_desc">Started the application</string>
+    <string name="activity_settings_changed">Settings Changed</string>
+    <string name="activity_settings_changed_desc">Modified app preferences</string>
+    <string name="activity_data_synced">Data Synced</string>
+    <string name="activity_data_synced_desc">Synchronized with server</string>
+
+    <!-- Content Descriptions -->
+    <string name="cd_welcome_icon">Welcome</string>
+    <string name="cd_profile_picture">Profile Picture</string>
+    <string name="cd_increase">Increase</string>
+    <string name="cd_decrease">Decrease</string>
+</resources>

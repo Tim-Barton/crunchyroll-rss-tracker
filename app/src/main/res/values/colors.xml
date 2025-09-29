@@ -18,6 +18,7 @@
     <!-- Text Colors -->
     <color name="text_primary">#212121</color>
     <color name="text_secondary">#757575</color>
+    <color name="text_tertiary">#9E9E9E</color>
     <color name="text_hint">#BDBDBD</color>
 
     <!-- Status Colors -->
@@ -37,4 +38,10 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- Custom colors for RSS tracker -->
+    <color name="accent_orange">#F47521</color>
+    <color name="episode_number_bg">#E3F2FD</color>
+    <color name="watched_indicator">#4CAF50</color>
+    <color name="card_background">#FFFFFF</color>
 </resources>

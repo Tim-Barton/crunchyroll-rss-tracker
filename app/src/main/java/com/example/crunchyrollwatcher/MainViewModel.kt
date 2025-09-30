@@ -95,3 +95,4 @@ class MainViewModel : ViewModel() {
         _rssEpisodes.value = searchResults
 
 }
+}

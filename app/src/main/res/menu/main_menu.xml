@@ -17,6 +17,20 @@
         android:orderInCategory="200" />
 
     <item
+        android:id="@+id/action_sync_now"
+        android:title="Sync Now"
+        android:icon="@drawable/ic_refresh"
+        app:showAsAction="never"
+        android:orderInCategory="250" />
+
+    <item
+        android:id="@+id/action_notifications"
+        android:title="Notification Settings"
+        android:icon="@android:drawable/ic_popup_reminder"
+        app:showAsAction="never"
+        android:orderInCategory="275" />
+
+    <item
         android:id="@+id/action_settings"
         android:title="Settings"
         android:icon="@android:drawable/ic_menu_preferences"

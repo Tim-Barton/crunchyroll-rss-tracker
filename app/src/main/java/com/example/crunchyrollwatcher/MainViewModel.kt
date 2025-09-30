@@ -12,6 +12,8 @@ class MainViewModel(context: Context) : ViewModel() {
 
     private val rssRepository = RssRepository()
     private val savedTitlesRepository: SavedTitlesRepository = SavedTitlesRepositoryImpl(context)
+    private val backgroundSyncManager = BackgroundSyncManager(context)
+    private val notificationHelper = NotificationHelper(context)
 
     private val _rssEpisodes = MutableLiveData<List<CrunchyrollEpisode>>()
     val rssEpisodes: LiveData<List<CrunchyrollEpisode>> = _rssEpisodes
@@ -159,6 +161,79 @@ class MainViewModel(context: Context) : ViewModel() {
                 }
             } catch (e: Exception) {
                 _errorMessage.value = "Failed to update episode progress: ${e.message}"
+            }
+        }
+    }
+
+    // Background sync functionality
+    fun setupBackgroundSync() {
+        viewModelScope.launch {
+            try {
+                if (backgroundSyncManager.isBackgroundCheckEnabled()) {
+                    backgroundSyncManager.scheduleDailyRssCheck()
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to setup background sync: ${e.message}"
+            }
+        }
+    }
+
+    fun enableBackgroundSync(enabled: Boolean) {
+        viewModelScope.launch {
+            try {
+                backgroundSyncManager.setBackgroundCheckEnabled(enabled)
+                if (enabled) {
+                    // Schedule immediate check to test the system
+                    backgroundSyncManager.scheduleImmediateRssCheck()
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to update background sync: ${e.message}"
+            }
+        }
+    }
+
+    fun isBackgroundSyncEnabled(): Boolean {
+        return backgroundSyncManager.isBackgroundCheckEnabled()
+    }
+
+    fun getLastSyncTime(): Long {
+        return backgroundSyncManager.getLastCheckTimestamp()
+    }
+
+    fun forceSyncNow() {
+        viewModelScope.launch {
+            try {
+                backgroundSyncManager.forceSyncNow()
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to start sync: ${e.message}"
+            }
+        }
+    }
+
+    fun testNotification() {
+        viewModelScope.launch {
+            try {
+                val savedTitles = savedTitlesRepository.getSavedTitles()
+                if (savedTitles.isNotEmpty()) {
+                    // Create a test episode for the first saved title
+                    val firstSavedTitle = savedTitles.first()
+                    val testEpisode = CrunchyrollEpisode(
+                        id = "test_${System.currentTimeMillis()}",
+                        title = "Test Episode - New Content Available!",
+                        description = "This is a test notification to verify that episode alerts are working correctly.",
+                        link = "https://www.crunchyroll.com/",
+                        imageUrl = firstSavedTitle.imageUrl,
+                        publishDate = java.text.SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", java.util.Locale.ENGLISH).format(java.util.Date()),
+                        category = "Anime",
+                        seriesTitle = firstSavedTitle.title,
+                        episodeNumber = "Test"
+                    )
+                    notificationHelper.showNewEpisodeNotification(testEpisode, firstSavedTitle)
+                } else {
+                    _errorMessage.value = "Add some favorite anime series first to test notifications"
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to send test notification: ${e.message}"
             }
         }
     }

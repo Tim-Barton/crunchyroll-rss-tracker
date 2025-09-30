@@ -117,6 +117,9 @@ class SavedTitlesActivity : AppCompatActivity() {
         clearAllButton.setOnClickListener {
             showClearAllConfirmationDialog()
         }
+
+        // Show notification status if notifications are disabled
+        checkNotificationStatus()
     }
 
     private fun onTitleClicked(savedTitle: SavedTitle) {
@@ -221,7 +224,20 @@ class SavedTitlesActivity : AppCompatActivity() {
 
         // Update titles count
         val count = savedTitles.size
-        savedTitlesCount.text = if (count == 1) "1 saved title" else "$count saved titles"
+        val notificationHelper = NotificationHelper(this)
+        val hasNotificationPermission = notificationHelper.hasNotificationPermission()
+
+        savedTitlesCount.text = buildString {
+            if (count == 1) {
+                append("1 saved title")
+            } else {
+                append("$count saved titles")
+            }
+
+            if (count > 0 && !hasNotificationPermission) {
+                append(" • Notifications disabled")
+            }
+        }
 
         // Show/hide clear all button based on content
         clearAllButton.visibility = if (count > 0) View.VISIBLE else View.GONE
@@ -264,5 +280,34 @@ class SavedTitlesActivity : AppCompatActivity() {
         super.onResume()
         // Refresh saved titles when returning to the activity
         viewModel.loadSavedTitles()
+    }
+
+    private fun checkNotificationStatus() {
+        val notificationHelper = NotificationHelper(this)
+        val savedTitles = viewModel.savedTitles.value
+
+        // Show info about notifications if user has saved titles but notifications are disabled
+        if (!savedTitles.isNullOrEmpty() && !notificationHelper.hasNotificationPermission()) {
+            showNotificationInfoDialog()
+        }
+    }
+
+    private fun showNotificationInfoDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("Enable Notifications?")
+            .setMessage(
+                "You have ${viewModel.savedTitles.value?.size} saved anime series!\n\n" +
+                "Enable notifications to get alerts when new episodes are available for your favorite shows."
+            )
+            .setPositiveButton("Enable") { _, _ ->
+                // Return to MainActivity where notification permission can be requested
+                val intent = Intent(this, MainActivity::class.java).apply {
+                    putExtra("request_notifications", true)
+                    flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                }
+                startActivity(intent)
+            }
+            .setNegativeButton("Later", null)
+            .show()
     }
 }

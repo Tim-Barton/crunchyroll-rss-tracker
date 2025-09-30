@@ -21,11 +21,15 @@ import android.widget.TextView
 import android.view.Menu
 import android.view.MenuItem
 import com.google.android.material.appbar.MaterialToolbar
+import androidx.activity.result.contract.ActivityResultContracts
+import java.text.SimpleDateFormat
+import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var viewModel: MainViewModel
     private lateinit var episodeAdapter: RssEpisodeAdapter
+    private lateinit var notificationPermissionHelper: NotificationPermissionHelper
 
     // Views
     private lateinit var searchEditText: TextInputEditText
@@ -45,6 +49,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var chipNew: Chip
     private lateinit var chipDubs: Chip
     private lateinit var chipSubs: Chip
+
+    // Permission launcher for notifications
+    private val notificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        handleNotificationPermissionResult(isGranted)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,6 +85,12 @@ class MainActivity : AppCompatActivity() {
 
         // Setup toolbar
         setupToolbar()
+
+        // Setup notification permission helper
+        setupNotificationPermissions()
+
+        // Setup background sync
+        setupBackgroundSync()
 
         // Load RSS feed on app start
         viewModel.loadRssEpisodes()
@@ -188,6 +205,51 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
     }
 
+    private fun setupNotificationPermissions() {
+        notificationPermissionHelper = NotificationPermissionHelper(this) { isGranted ->
+            handleNotificationPermissionResult(isGranted)
+        }
+        notificationPermissionHelper.initialize(notificationPermissionLauncher)
+    }
+
+    private fun setupBackgroundSync() {
+        // Check if we have saved titles and notification permission
+        viewModel.savedTitles.observe(this) { savedTitles ->
+            if (savedTitles.isNotEmpty() && !notificationPermissionHelper.hasNotificationPermission()) {
+                // Delay the permission request to avoid showing it immediately on app start
+                window.decorView.post {
+                    showNotificationPermissionPrompt()
+                }
+            }
+        }
+
+        // Setup background sync if permission is granted
+        if (notificationPermissionHelper.hasNotificationPermission()) {
+            viewModel.setupBackgroundSync()
+        }
+    }
+
+    private fun showNotificationPermissionPrompt() {
+        // Only show if user has saved titles
+        val savedTitles = viewModel.savedTitles.value
+        if (!savedTitles.isNullOrEmpty()) {
+            notificationPermissionHelper.requestNotificationPermission()
+        }
+    }
+
+    private fun handleNotificationPermissionResult(isGranted: Boolean) {
+        if (isGranted) {
+            // Permission granted - setup background sync
+            viewModel.setupBackgroundSync()
+            viewModel.enableBackgroundSync(true)
+            Toast.makeText(this, "Notifications enabled! You'll receive alerts for new episodes.", Toast.LENGTH_LONG).show()
+        } else {
+            // Permission denied - still allow manual checking
+            notificationPermissionHelper.showPermissionDeniedDialog()
+            viewModel.enableBackgroundSync(false)
+        }
+    }
+
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.main_menu, menu)
         return true
@@ -204,8 +266,17 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this, "Refreshing anime RSS feed...", Toast.LENGTH_SHORT).show()
                 true
             }
+            R.id.action_sync_now -> {
+                viewModel.forceSyncNow()
+                Toast.makeText(this, "Starting background sync...", Toast.LENGTH_SHORT).show()
+                true
+            }
+            R.id.action_notifications -> {
+                showNotificationSettingsDialog()
+                true
+            }
             R.id.action_settings -> {
-                Toast.makeText(this, "Settings coming soon!", Toast.LENGTH_SHORT).show()
+                showSettingsDialog()
                 true
             }
             else -> super.onOptionsItemSelected(item)
@@ -317,6 +388,13 @@ class MainActivity : AppCompatActivity() {
             searchEditText.setText(searchQuery)
             viewModel.searchEpisodes(searchQuery)
         }
+
+        // Handle notification permission request from SavedTitlesActivity
+        if (intent?.getBooleanExtra("request_notifications", false) == true) {
+            window.decorView.post {
+                notificationPermissionHelper.requestNotificationPermission()
+            }
+        }
     }
 
     override fun onNewIntent(intent: Intent?) {
@@ -329,5 +407,131 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         // Refresh anime RSS data when returning to the app
         viewModel.loadRssEpisodes()
+
+        // Check if notifications were enabled/disabled in settings
+        if (notificationPermissionHelper.hasNotificationPermission() && !viewModel.isBackgroundSyncEnabled()) {
+            viewModel.setupBackgroundSync()
+        }
+    }
+
+    private fun showSettingsDialog() {
+        val options = mutableListOf<String>()
+        val actions = mutableListOf<() -> Unit>()
+
+        // Background sync toggle
+        val syncEnabled = viewModel.isBackgroundSyncEnabled()
+        options.add(if (syncEnabled) "Disable Background Sync" else "Enable Background Sync")
+        actions.add {
+            if (syncEnabled) {
+                viewModel.enableBackgroundSync(false)
+                Toast.makeText(this, "Background sync disabled", Toast.LENGTH_SHORT).show()
+            } else {
+                if (notificationPermissionHelper.hasNotificationPermission()) {
+                    viewModel.enableBackgroundSync(true)
+                    Toast.makeText(this, "Background sync enabled", Toast.LENGTH_SHORT).show()
+                } else {
+                    notificationPermissionHelper.requestNotificationPermission()
+                }
+            }
+        }
+
+        // Last sync time
+        val lastSync = viewModel.getLastSyncTime()
+        val lastSyncText = if (lastSync > 0) {
+            val format = SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault())
+            "Last sync: ${format.format(Date(lastSync))}"
+        } else {
+            "Never synced"
+        }
+        options.add("Force Sync Now")
+        actions.add {
+            viewModel.forceSyncNow()
+            Toast.makeText(this, "Starting background sync...", Toast.LENGTH_SHORT).show()
+        }
+
+        // Test notification
+        options.add("Send Test Notification")
+        actions.add {
+            if (notificationPermissionHelper.hasNotificationPermission()) {
+                viewModel.testNotification()
+                Toast.makeText(this, "Test notification sent!", Toast.LENGTH_SHORT).show()
+            } else {
+                notificationPermissionHelper.showNotificationsDisabledDialog()
+            }
+        }
+
+        // Notification settings
+        if (!notificationPermissionHelper.areNotificationsEnabled()) {
+            options.add("Enable Notifications")
+            actions.add {
+                notificationPermissionHelper.showNotificationsDisabledDialog()
+            }
+        }
+
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Settings")
+            .setMessage(lastSyncText)
+            .setItems(options.toTypedArray()) { _, which ->
+                actions[which].invoke()
+            }
+            .setNegativeButton("Close", null)
+            .show()
+    }
+
+    private fun showNotificationSettingsDialog() {
+        val hasPermission = notificationPermissionHelper.hasNotificationPermission()
+        val isEnabled = notificationPermissionHelper.areNotificationsEnabled()
+        val syncEnabled = viewModel.isBackgroundSyncEnabled()
+
+        val message = buildString {
+            append("Notification Status:\n")
+            append("• Permission: ${if (hasPermission) "Granted" else "Denied"}\n")
+            append("• System Enabled: ${if (isEnabled) "Yes" else "No"}\n")
+            append("• Background Sync: ${if (syncEnabled) "Enabled" else "Disabled"}\n\n")
+
+            if (!hasPermission || !isEnabled) {
+                append("Enable notifications to receive alerts about new episodes of your favorite anime series.")
+            } else {
+                append("You'll receive notifications when new episodes are available for your saved titles.")
+            }
+        }
+
+        val options = mutableListOf<String>()
+        val actions = mutableListOf<() -> Unit>()
+
+        if (!hasPermission) {
+            options.add("Request Permission")
+            actions.add {
+                notificationPermissionHelper.requestNotificationPermission()
+            }
+        }
+
+        if (!isEnabled) {
+            options.add("Open Settings")
+            actions.add {
+                notificationPermissionHelper.showNotificationsDisabledDialog()
+            }
+        }
+
+        if (hasPermission && isEnabled) {
+            options.add("Send Test Notification")
+            actions.add {
+                viewModel.testNotification()
+                Toast.makeText(this, "Test notification sent!", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        val builder = androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Notification Settings")
+            .setMessage(message)
+            .setNegativeButton("Close", null)
+
+        if (options.isNotEmpty()) {
+            builder.setItems(options.toTypedArray()) { _, which ->
+                actions[which].invoke()
+            }
+        }
+
+        builder.show()
     }
 }

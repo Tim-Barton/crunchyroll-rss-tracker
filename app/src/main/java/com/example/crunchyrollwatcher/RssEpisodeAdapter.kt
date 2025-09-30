@@ -13,7 +13,9 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class RssEpisodeAdapter(
-    private val onEpisodeClick: (CrunchyrollEpisode) -> Unit
+    private val onEpisodeClick: (CrunchyrollEpisode) -> Unit,
+    private val onFavoriteClick: (CrunchyrollEpisode) -> Unit,
+    private val isTitleSaved: (String) -> Boolean
 ) : ListAdapter<CrunchyrollEpisode, RssEpisodeAdapter.EpisodeViewHolder>(EpisodeDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): EpisodeViewHolder {
@@ -34,6 +36,7 @@ class RssEpisodeAdapter(
         private val episodeDescription: TextView = itemView.findViewById(R.id.episodeDescription)
         private val publishDate: TextView = itemView.findViewById(R.id.publishDate)
         private val watchedIndicator: View = itemView.findViewById(R.id.watchedIndicator)
+        private val favoriteButton: ImageView = itemView.findViewById(R.id.favoriteButton)
 
         fun bind(episode: CrunchyrollEpisode) {
             seriesTitle.text = episode.seriesTitle
@@ -65,10 +68,26 @@ class RssEpisodeAdapter(
                 episodeImage.setImageResource(R.drawable.ic_placeholder)
             }
 
-            // Set click listener
+            // Update favorite button state
+            updateFavoriteButton(episode.seriesTitle)
+
+            // Set click listeners
             itemView.setOnClickListener {
                 onEpisodeClick(episode)
             }
+
+            favoriteButton.setOnClickListener {
+                onFavoriteClick(episode)
+                updateFavoriteButton(episode.seriesTitle)
+            }
+        }
+
+        private fun updateFavoriteButton(seriesTitle: String) {
+            val isSaved = isTitleSaved(seriesTitle)
+            favoriteButton.setImageResource(
+                if (isSaved) R.drawable.ic_heart_filled else R.drawable.ic_heart
+            )
+            favoriteButton.contentDescription = if (isSaved) "Remove from favorites" else "Add to favorites"
         }
 
         private fun formatDate(dateString: String): String {

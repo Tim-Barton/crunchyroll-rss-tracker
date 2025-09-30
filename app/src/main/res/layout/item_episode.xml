@@ -53,6 +53,16 @@
                     android:ellipsize="end"
                     tools:text="Attack on Titan" />
 
+                <ImageButton
+                    android:id="@+id/favoriteButton"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_marginStart="8dp"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_heart"
+                    android:contentDescription="Add to favorites"
+                    android:padding="4dp" />
+
                 <View
                     android:id="@+id/watchedIndicator"
                     android:layout_width="8dp"

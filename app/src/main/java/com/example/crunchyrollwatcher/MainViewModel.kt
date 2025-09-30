@@ -1,5 +1,6 @@
 package com.example.crunchyrollwatcher
 
+import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -7,9 +8,10 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class MainViewModel : ViewModel() {
+class MainViewModel(context: Context) : ViewModel() {
 
     private val rssRepository = RssRepository()
+    private val savedTitlesRepository: SavedTitlesRepository = SavedTitlesRepositoryImpl(context)
 
     private val _rssEpisodes = MutableLiveData<List<CrunchyrollEpisode>>()
     val rssEpisodes: LiveData<List<CrunchyrollEpisode>> = _rssEpisodes
@@ -20,7 +22,8 @@ class MainViewModel : ViewModel() {
     private val _errorMessage = MutableLiveData<String>()
     val errorMessage: LiveData<String> = _errorMessage
 
-
+    private val _savedTitles = MutableLiveData<List<SavedTitle>>()
+    val savedTitles: LiveData<List<SavedTitle>> = _savedTitles
 
     private val _currentFilter = MutableLiveData<RssFilter>()
     val currentFilter: LiveData<RssFilter> = _currentFilter
@@ -30,6 +33,7 @@ class MainViewModel : ViewModel() {
         _isLoading.value = false
         _errorMessage.value = ""
         _currentFilter.value = RssFilter()
+        loadSavedTitles()
     }
 
     fun loadRssEpisodes() {
@@ -93,6 +97,70 @@ class MainViewModel : ViewModel() {
             }
         }
         _rssEpisodes.value = searchResults
+    }
 
-}
+    // Favorites/Saved Titles functionality
+    fun loadSavedTitles() {
+        viewModelScope.launch {
+            try {
+                val titles = savedTitlesRepository.getSavedTitles()
+                _savedTitles.value = titles
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to load saved titles: ${e.message}"
+            }
+        }
+    }
+
+    fun saveTitle(episode: CrunchyrollEpisode) {
+        viewModelScope.launch {
+            try {
+                val savedTitle = SavedTitle.fromCrunchyrollEpisode(episode)
+                val success = savedTitlesRepository.saveTitleToList(savedTitle)
+
+                if (success) {
+                    loadSavedTitles() // Refresh the list
+                } else {
+                    _errorMessage.value = "Failed to save title"
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to save title: ${e.message}"
+            }
+        }
+    }
+
+    fun removeSavedTitle(titleId: String) {
+        viewModelScope.launch {
+            try {
+                val success = savedTitlesRepository.removeTitleFromList(titleId)
+
+                if (success) {
+                    loadSavedTitles() // Refresh the list
+                } else {
+                    _errorMessage.value = "Failed to remove title"
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to remove title: ${e.message}"
+            }
+        }
+    }
+
+    fun isTitleSaved(seriesTitle: String): Boolean {
+        val titleId = seriesTitle.lowercase().replace(Regex("[^a-z0-9]"), "_")
+        return savedTitlesRepository.isTitleSaved(titleId)
+    }
+
+    fun updateEpisodeProgress(episode: CrunchyrollEpisode) {
+        viewModelScope.launch {
+            try {
+                val titleId = episode.seriesTitle.lowercase().replace(Regex("[^a-z0-9]"), "_")
+                if (savedTitlesRepository.isTitleSaved(titleId)) {
+                    savedTitlesRepository.updateEpisodeCount(titleId, episode.episodeNumber)
+                    loadSavedTitles() // Refresh the list
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to update episode progress: ${e.message}"
+            }
+        }
+    }
+
 }

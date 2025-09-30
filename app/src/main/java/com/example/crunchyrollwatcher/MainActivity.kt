@@ -18,6 +18,9 @@ import com.google.android.material.textfield.TextInputEditText
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
+import android.view.Menu
+import android.view.MenuItem
+import com.google.android.material.appbar.MaterialToolbar
 
 class MainActivity : AppCompatActivity() {
 
@@ -35,6 +38,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var errorMessage: TextView
     private lateinit var retryButton: MaterialButton
     private lateinit var refreshFab: FloatingActionButton
+    private lateinit var toolbar: MaterialToolbar
 
     // Chips
     private lateinit var chipAll: Chip
@@ -46,8 +50,9 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Initialize ViewModel
-        viewModel = ViewModelProvider(this)[MainViewModel::class.java]
+        // Initialize ViewModel with factory
+        val viewModelFactory = ViewModelFactory(this)
+        viewModel = ViewModelProvider(this, viewModelFactory)[MainViewModel::class.java]
 
         // Initialize views
         initViews()
@@ -67,8 +72,14 @@ class MainActivity : AppCompatActivity() {
         // Setup FAB
         setupFab()
 
+        // Setup toolbar
+        setupToolbar()
+
         // Load RSS feed on app start
         viewModel.loadRssEpisodes()
+
+        // Handle intent extras (like search query from SavedTitlesActivity)
+        handleIntentExtras()
     }
 
     private fun initViews() {
@@ -82,6 +93,7 @@ class MainActivity : AppCompatActivity() {
         errorMessage = findViewById(R.id.errorMessage)
         retryButton = findViewById(R.id.retryButton)
         refreshFab = findViewById(R.id.refreshFab)
+        toolbar = findViewById(R.id.toolbar)
 
         // Initialize chips
         chipAll = findViewById(R.id.chipAll)
@@ -91,9 +103,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerView() {
-        episodeAdapter = RssEpisodeAdapter { episode ->
-            onEpisodeClicked(episode)
-        }
+        episodeAdapter = RssEpisodeAdapter(
+            onEpisodeClick = { episode -> onEpisodeClicked(episode) },
+            onFavoriteClick = { episode -> onFavoriteClicked(episode) },
+            isTitleSaved = { seriesTitle -> viewModel.isTitleSaved(seriesTitle) }
+        )
 
         episodesRecyclerView.apply {
             layoutManager = LinearLayoutManager(this@MainActivity)
@@ -128,6 +142,11 @@ class MainActivity : AppCompatActivity() {
             } else {
                 hideError()
             }
+        }
+
+        viewModel.savedTitles.observe(this) { savedTitles ->
+            // Update adapter when saved titles change
+            episodeAdapter.notifyDataSetChanged()
         }
     }
 
@@ -165,6 +184,34 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun setupToolbar() {
+        setSupportActionBar(toolbar)
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.main_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_saved_titles -> {
+                openSavedTitlesActivity()
+                true
+            }
+            R.id.action_refresh -> {
+                viewModel.refreshRssFeed()
+                Toast.makeText(this, "Refreshing anime RSS feed...", Toast.LENGTH_SHORT).show()
+                true
+            }
+            R.id.action_settings -> {
+                Toast.makeText(this, "Settings coming soon!", Toast.LENGTH_SHORT).show()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
     private fun setupFab() {
         refreshFab.setOnClickListener {
             viewModel.refreshRssFeed()
@@ -173,19 +220,29 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onEpisodeClicked(episode: CrunchyrollEpisode) {
-        // Mark as watched/unwatched
-        val newWatchedState = !episode.isWatched
-        viewModel.markEpisodeAsWatched(episode.id, newWatchedState)
-
         // Show options dialog
         showEpisodeOptionsDialog(episode)
+    }
+
+    private fun onFavoriteClicked(episode: CrunchyrollEpisode) {
+        if (viewModel.isTitleSaved(episode.seriesTitle)) {
+            // Remove from favorites
+            val titleId = episode.seriesTitle.lowercase().replace(Regex("[^a-z0-9]"), "_")
+            viewModel.removeSavedTitle(titleId)
+            Toast.makeText(this, "Removed ${episode.seriesTitle} from favorites", Toast.LENGTH_SHORT).show()
+        } else {
+            // Add to favorites
+            viewModel.saveTitle(episode)
+            Toast.makeText(this, "Added ${episode.seriesTitle} to favorites", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun showEpisodeOptionsDialog(episode: CrunchyrollEpisode) {
         val options = arrayOf(
             "Open in Browser",
             if (episode.isWatched) "Mark as Unwatched" else "Mark as Watched",
-            "Share Episode"
+            "Share Episode",
+            "View Saved Titles"
         )
 
         androidx.appcompat.app.AlertDialog.Builder(this)
@@ -195,9 +252,15 @@ class MainActivity : AppCompatActivity() {
                     0 -> openInBrowser(episode.link)
                     1 -> viewModel.markEpisodeAsWatched(episode.id, !episode.isWatched)
                     2 -> shareEpisode(episode)
+                    3 -> openSavedTitlesActivity()
                 }
             }
             .show()
+    }
+
+    private fun openSavedTitlesActivity() {
+        val intent = Intent(this, SavedTitlesActivity::class.java)
+        startActivity(intent)
     }
 
     private fun openInBrowser(url: String) {
@@ -247,6 +310,19 @@ class MainActivity : AppCompatActivity() {
 
     private fun hideError() {
         errorStateLayout.visibility = View.GONE
+    }
+
+    private fun handleIntentExtras() {
+        intent?.getStringExtra("search_query")?.let { searchQuery ->
+            searchEditText.setText(searchQuery)
+            viewModel.searchEpisodes(searchQuery)
+        }
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleIntentExtras()
     }
 
     override fun onResume() {

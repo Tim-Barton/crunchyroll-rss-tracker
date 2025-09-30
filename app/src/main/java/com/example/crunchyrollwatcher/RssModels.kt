@@ -127,3 +127,43 @@ data class RssFilter(
     val seriesName: String? = null,
     val language: String? = null
 )
+
+// Model for saved/favorite titles
+data class SavedTitle(
+    val id: String,
+    val title: String,
+    val description: String? = null,
+    val imageUrl: String? = null,
+    val category: String = "Anime",
+    val dateAdded: Long = System.currentTimeMillis(),
+    val episodeCount: Int = 0,
+    val lastEpisodeSeen: String? = null
+) {
+    companion object {
+        fun fromCrunchyrollEpisode(episode: CrunchyrollEpisode): SavedTitle {
+            return SavedTitle(
+                id = generateIdFromTitle(episode.seriesTitle),
+                title = episode.seriesTitle,
+                description = episode.description,
+                imageUrl = episode.imageUrl,
+                category = episode.category,
+                episodeCount = 1,
+                lastEpisodeSeen = episode.episodeNumber
+            )
+        }
+
+        private fun generateIdFromTitle(title: String): String {
+            // Generate a consistent ID from the series title
+            return title.lowercase().replace(Regex("[^a-z0-9]"), "_")
+        }
+    }
+}
+
+// Repository interface for managing saved titles
+interface SavedTitlesRepository {
+    fun getSavedTitles(): List<SavedTitle>
+    fun saveTitleToList(savedTitle: SavedTitle): Boolean
+    fun removeTitleFromList(titleId: String): Boolean
+    fun isTitleSaved(titleId: String): Boolean
+    fun updateEpisodeCount(titleId: String, episodeNumber: String?): Boolean
+}

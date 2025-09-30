@@ -202,7 +202,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupToolbar() {
-        setSupportActionBar(toolbar)
+        if (::toolbar.isInitialized) {
+            setSupportActionBar(toolbar)
+        }
     }
 
     private fun setupNotificationPermissions() {

@@ -35,6 +35,8 @@ class MainViewModel(context: Context) : ViewModel() {
         _isLoading.value = false
         _errorMessage.value = ""
         _currentFilter.value = RssFilter()
+        // Load saved titles synchronously for immediate availability
+        _savedTitles.value = savedTitlesRepository.getSavedTitles()
         loadSavedTitles()
     }
 
@@ -148,6 +150,12 @@ class MainViewModel(context: Context) : ViewModel() {
 
     fun isTitleSaved(seriesTitle: String): Boolean {
         val titleId = seriesTitle.lowercase().replace(Regex("[^a-z0-9]"), "_")
+        // Check cached saved titles first for immediate response
+        val cachedTitles = _savedTitles.value
+        if (cachedTitles != null) {
+            return cachedTitles.any { it.id == titleId }
+        }
+        // Fallback to repository if cache is not available
         return savedTitlesRepository.isTitleSaved(titleId)
     }
 

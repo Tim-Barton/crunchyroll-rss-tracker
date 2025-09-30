@@ -163,7 +163,7 @@ class MainActivity : AppCompatActivity() {
 
         viewModel.savedTitles.observe(this) { savedTitles ->
             // Update adapter when saved titles change
-            episodeAdapter.notifyDataSetChanged()
+            episodeAdapter.updateSavedTitles(savedTitles)
         }
     }
 
@@ -298,9 +298,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onFavoriteClicked(episode: CrunchyrollEpisode) {
-        if (viewModel.isTitleSaved(episode.seriesTitle)) {
+        val titleId = episode.seriesTitle.lowercase().replace(Regex("[^a-z0-9]"), "_")
+        val isSaved = viewModel.isTitleSaved(episode.seriesTitle)
+
+        if (isSaved) {
             // Remove from favorites
-            val titleId = episode.seriesTitle.lowercase().replace(Regex("[^a-z0-9]"), "_")
             viewModel.removeSavedTitle(titleId)
             Toast.makeText(this, "Removed ${episode.seriesTitle} from favorites", Toast.LENGTH_SHORT).show()
         } else {
@@ -409,6 +411,9 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         // Refresh anime RSS data when returning to the app
         viewModel.loadRssEpisodes()
+
+        // Refresh favorite button states when returning to the app
+        viewModel.loadSavedTitles()
 
         // Check if notifications were enabled/disabled in settings
         if (notificationPermissionHelper.hasNotificationPermission() && !viewModel.isBackgroundSyncEnabled()) {

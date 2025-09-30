@@ -18,6 +18,39 @@ class RssEpisodeAdapter(
     private val isTitleSaved: (String) -> Boolean
 ) : ListAdapter<CrunchyrollEpisode, RssEpisodeAdapter.EpisodeViewHolder>(EpisodeDiffCallback()) {
 
+    // Keep track of saved title IDs for immediate access
+    private var savedTitleIds: Set<String> = emptySet()
+
+    /**
+     * Update the saved titles cache and refresh favorite states
+     */
+    fun updateSavedTitles(savedTitlesList: List<SavedTitle>) {
+        savedTitleIds = savedTitlesList.map { it.id }.toSet()
+        notifyDataSetChanged()
+    }
+
+    /**
+     * Update all visible items to refresh their favorite button states
+     */
+    fun updateFavoriteStates() {
+        notifyDataSetChanged()
+    }
+
+    /**
+     * Check if a title is saved using cached data
+     */
+    private fun isSeriesSaved(seriesTitle: String): Boolean {
+        val titleId = generateIdFromTitle(seriesTitle)
+        return savedTitleIds.contains(titleId) || isTitleSaved(seriesTitle)
+    }
+
+    /**
+     * Generate consistent ID from title (matching SavedTitle.generateIdFromTitle)
+     */
+    private fun generateIdFromTitle(title: String): String {
+        return title.lowercase().replace(Regex("[^a-z0-9]"), "_")
+    }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): EpisodeViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_episode, parent, false)
@@ -26,6 +59,15 @@ class RssEpisodeAdapter(
 
     override fun onBindViewHolder(holder: EpisodeViewHolder, position: Int) {
         holder.bind(getItem(position))
+    }
+
+    override fun onBindViewHolder(holder: EpisodeViewHolder, position: Int, payloads: MutableList<Any>) {
+        if (payloads.isNotEmpty() && payloads.contains("favorite_status_update")) {
+            // Only update the favorite button instead of the entire item
+            holder.updateFavoriteButtonOnly(getItem(position))
+        } else {
+            super.onBindViewHolder(holder, position, payloads)
+        }
     }
 
     inner class EpisodeViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -78,12 +120,15 @@ class RssEpisodeAdapter(
 
             favoriteButton.setOnClickListener {
                 onFavoriteClick(episode)
-                updateFavoriteButton(episode.seriesTitle)
             }
         }
 
+        fun updateFavoriteButtonOnly(episode: CrunchyrollEpisode) {
+            updateFavoriteButton(episode.seriesTitle)
+        }
+
         private fun updateFavoriteButton(seriesTitle: String) {
-            val isSaved = isTitleSaved(seriesTitle)
+            val isSaved = isSeriesSaved(seriesTitle)
             favoriteButton.setImageResource(
                 if (isSaved) R.drawable.ic_heart_filled else R.drawable.ic_heart
             )
@@ -109,6 +154,15 @@ class RssEpisodeAdapter(
 
         override fun areContentsTheSame(oldItem: CrunchyrollEpisode, newItem: CrunchyrollEpisode): Boolean {
             return oldItem == newItem
+        }
+
+        override fun getChangePayload(oldItem: CrunchyrollEpisode, newItem: CrunchyrollEpisode): Any? {
+            // If only the favorite status might have changed, return a payload to update just the button
+            return if (oldItem.id == newItem.id && oldItem.seriesTitle == newItem.seriesTitle) {
+                "favorite_status_update"
+            } else {
+                super.getChangePayload(oldItem, newItem)
+            }
         }
     }
 }

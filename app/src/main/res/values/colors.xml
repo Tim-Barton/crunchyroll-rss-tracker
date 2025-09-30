@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Primary Colors -->
-    <color name="primary">#FF6B35</color>
-    <color name="primary_dark">#E55A2B</color>
-    <color name="primary_light">#FF8A65</color>
+    <color name="primary">#1565C0</color>
+    <color name="primary_dark">#0D47A1</color>
+    <color name="primary_light">#1976D2</color>
 
     <!-- Secondary Colors -->
     <color name="secondary">#23252F</color>
@@ -40,8 +40,8 @@
     <color name="white">#FFFFFFFF</color>
 
     <!-- Custom colors for RSS tracker -->
-    <color name="accent_orange">#F47521</color>
-    <color name="episode_number_bg">#E3F2FD</color>
+    <color name="accent_blue">#1E88E5</color>
+    <color name="episode_number_bg">#BBDEFB</color>
     <color name="watched_indicator">#4CAF50</color>
-    <color name="card_background">#FFFFFF</color>
+    <color name="card_background">#FAFAFA</color>
 </resources>

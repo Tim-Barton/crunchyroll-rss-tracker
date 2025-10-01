@@ -163,7 +163,7 @@ class MainActivity : AppCompatActivity() {
 
         viewModel.savedTitles.observe(this) { savedTitles ->
             // Update adapter when saved titles change
-            episodeAdapter.updateSavedTitles(savedTitles)
+            episodeAdapter.updateFavoriteStates()
         }
     }
 

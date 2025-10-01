@@ -38,6 +38,17 @@ class MainViewModel(context: Context) : ViewModel() {
         // Load saved titles synchronously for immediate availability
         _savedTitles.value = savedTitlesRepository.getSavedTitles()
         loadSavedTitles()
+
+        // Debug: Check what's loaded on startup
+        debugSavedTitles()
+    }
+
+    private fun debugSavedTitles() {
+        val titles = savedTitlesRepository.getSavedTitles()
+        println("MainViewModel DEBUG: Found ${titles.size} saved titles on startup")
+        titles.forEach { title ->
+            println("MainViewModel DEBUG: - ID: ${title.id}, Title: ${title.title}")
+        }
     }
 
     fun loadRssEpisodes() {

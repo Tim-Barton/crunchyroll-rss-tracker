@@ -18,37 +18,11 @@ class RssEpisodeAdapter(
     private val isTitleSaved: (String) -> Boolean
 ) : ListAdapter<CrunchyrollEpisode, RssEpisodeAdapter.EpisodeViewHolder>(EpisodeDiffCallback()) {
 
-    // Keep track of saved title IDs for immediate access
-    private var savedTitleIds: Set<String> = emptySet()
-
-    /**
-     * Update the saved titles cache and refresh favorite states
-     */
-    fun updateSavedTitles(savedTitlesList: List<SavedTitle>) {
-        savedTitleIds = savedTitlesList.map { it.id }.toSet()
-        notifyDataSetChanged()
-    }
-
     /**
      * Update all visible items to refresh their favorite button states
      */
     fun updateFavoriteStates() {
         notifyDataSetChanged()
-    }
-
-    /**
-     * Check if a title is saved using cached data
-     */
-    private fun isSeriesSaved(seriesTitle: String): Boolean {
-        val titleId = generateIdFromTitle(seriesTitle)
-        return savedTitleIds.contains(titleId) || isTitleSaved(seriesTitle)
-    }
-
-    /**
-     * Generate consistent ID from title (matching SavedTitle.generateIdFromTitle)
-     */
-    private fun generateIdFromTitle(title: String): String {
-        return title.lowercase().replace(Regex("[^a-z0-9]"), "_")
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): EpisodeViewHolder {
@@ -128,7 +102,7 @@ class RssEpisodeAdapter(
         }
 
         private fun updateFavoriteButton(seriesTitle: String) {
-            val isSaved = isSeriesSaved(seriesTitle)
+            val isSaved = isTitleSaved(seriesTitle)
             favoriteButton.setImageResource(
                 if (isSaved) R.drawable.ic_heart_filled else R.drawable.ic_heart
             )

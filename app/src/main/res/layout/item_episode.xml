@@ -49,8 +49,6 @@
                     android:textSize="16sp"
                     android:textStyle="bold"
                     android:textColor="@android:color/black"
-                    android:maxLines="1"
-                    android:ellipsize="end"
                     tools:text="Attack on Titan" />
 
                 <ImageButton
@@ -93,8 +91,6 @@
                 android:layout_marginTop="4dp"
                 android:textSize="14sp"
                 android:textColor="@android:color/black"
-                android:maxLines="2"
-                android:ellipsize="end"
                 tools:text="The Final Battle Begins" />
 
             <TextView
@@ -104,8 +100,6 @@
                 android:layout_marginTop="4dp"
                 android:textSize="12sp"
                 android:textColor="@color/text_secondary"
-                android:maxLines="2"
-                android:ellipsize="end"
                 tools:text="The long-awaited final battle between the Survey Corps and the Titans reaches its climax..." />
 
             <TextView

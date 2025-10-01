@@ -217,4 +217,47 @@
         app:backgroundTint="@color/primary"
         app:tint="@android:color/white" />
 
+    <!-- Advertising Container -->
+    <FrameLayout
+        android:id="@+id/adContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="@color/background_secondary"
+        android:elevation="8dp"
+        android:padding="8dp">
+
+        <!-- Placeholder ad view - replace with actual ad network view -->
+        <LinearLayout
+            android:id="@+id/adPlaceholder"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:background="@drawable/ad_placeholder_background"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:visibility="visible">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Advertisement"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                android:alpha="0.7" />
+
+        </LinearLayout>
+
+        <!-- Actual ad view will be added programmatically here -->
+        <!-- Example AdMob banner:
+        <com.google.android.gms.ads.AdView
+            android:id="@+id/adView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            ads:adSize="BANNER"
+            ads:adUnitId="ca-app-pub-3940256099942544/6300978111"
+            android:visibility="gone" />
+        -->
+
+    </FrameLayout>
+
 </LinearLayout>

@@ -107,10 +107,9 @@ class BackgroundSyncManager(private val context: Context) {
      * Checks if RSS checking is currently scheduled
      */
     fun isRssCheckScheduled(): Boolean {
-        val workInfos = workManager.getWorkInfosForUniqueWork(RssCheckWorker.WORK_NAME)
         return try {
-            val workInfo = workInfos.get()
-            workInfo.any { it.state == WorkInfo.State.ENQUEUED || it.state == WorkInfo.State.RUNNING }
+            val workInfos = workManager.getWorkInfosForUniqueWork(RssCheckWorker.WORK_NAME).get()
+            workInfos.any { it.state == WorkInfo.State.ENQUEUED || it.state == WorkInfo.State.RUNNING }
         } catch (e: Exception) {
             false
         }

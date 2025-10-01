@@ -1,0 +1,24 @@
+# AdMob Configuration Template
+# Copy this file to 'admob.properties' and fill in your actual AdMob IDs
+# DO NOT commit the actual admob.properties file to version control
+
+# Your AdMob App ID (found in AdMob console)
+# Format: ca-app-pub-1234567890123456~1234567890
+ADMOB_APP_ID=REPLACE_WITH_YOUR_ADMOB_APP_ID
+
+# Your AdMob Banner Unit ID (found in AdMob console)
+# Format: ca-app-pub-1234567890123456/1234567890
+ADMOB_BANNER_UNIT_ID=REPLACE_WITH_YOUR_BANNER_UNIT_ID
+
+# Your AdMob Interstitial Unit ID (optional)
+# Format: ca-app-pub-1234567890123456/1234567890
+ADMOB_INTERSTITIAL_UNIT_ID=REPLACE_WITH_YOUR_INTERSTITIAL_UNIT_ID
+
+# Enable/disable ads in production (true/false)
+ADS_ENABLED=true
+
+# Instructions:
+# 1. Copy this file to 'admob.properties' in the same directory
+# 2. Replace the placeholder values with your actual AdMob IDs from https://apps.admob.com/
+# 3. Never commit the actual 'admob.properties' file to version control
+# 4. The build system will automatically use these values for release builds

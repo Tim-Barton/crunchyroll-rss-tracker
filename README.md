@@ -18,6 +18,23 @@ This is test 1 of 2, see the other 'vibe' named branch for the other test.
 
 A modern Android application built with Kotlin for tracking the latest Crunchyroll episodes via RSS feeds and managing your anime watchlist. This app provides a clean, intuitive tabbed interface to browse the latest episode releases and search for specific anime titles.
 
+## AdMob Integration
+
+This app includes AdMob advertisement support with secure configuration management. 
+
+### Quick Setup
+1. Copy `admob.properties.template` to `admob.properties`
+2. Add your actual AdMob IDs from the [AdMob Console](https://apps.admob.com/)
+3. Build and test your app
+
+For detailed setup instructions, see [ADMOB_SETUP.md](ADMOB_SETUP.md).
+
+### Security Features
+- ✅ Real AdMob IDs are never committed to version control
+- ✅ Debug builds use Google's test ads automatically  
+- ✅ Release builds use your production AdMob IDs
+- ✅ Fallback to demo ads if AdMob isn't configured
+
 ## Features
 
 - **RSS Feed Reader**: Real-time access to Crunchyroll's latest episode releases

@@ -84,6 +84,11 @@ lint/outputs/
 lint/tmp/
 # lint/reports/
 
+# AdMob configuration (contains sensitive IDs)
+admob.properties
+app/admob.properties
+**/admob.properties
+
 # Android Profiling
 *.hprof
 

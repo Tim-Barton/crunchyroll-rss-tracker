@@ -24,12 +24,14 @@ import com.google.android.material.appbar.MaterialToolbar
 import androidx.activity.result.contract.ActivityResultContracts
 import java.text.SimpleDateFormat
 import java.util.*
+import android.widget.FrameLayout
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var viewModel: MainViewModel
     private lateinit var episodeAdapter: RssEpisodeAdapter
     private lateinit var notificationPermissionHelper: NotificationPermissionHelper
+    private lateinit var adManager: AdManager
 
     // Views
     private lateinit var searchEditText: TextInputEditText
@@ -43,6 +45,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var retryButton: MaterialButton
     private lateinit var refreshFab: FloatingActionButton
     private lateinit var toolbar: MaterialToolbar
+    private lateinit var adContainer: FrameLayout
 
     // Chips
     private lateinit var chipAll: Chip
@@ -92,6 +95,9 @@ class MainActivity : AppCompatActivity() {
         // Setup background sync
         setupBackgroundSync()
 
+        // Setup advertisements
+        setupAds()
+
         // Load RSS feed on app start
         viewModel.loadRssEpisodes()
 
@@ -111,6 +117,7 @@ class MainActivity : AppCompatActivity() {
         retryButton = findViewById(R.id.retryButton)
         refreshFab = findViewById(R.id.refreshFab)
         toolbar = findViewById(R.id.toolbar)
+        adContainer = findViewById(R.id.adContainer)
 
         // Initialize chips
         chipAll = findViewById(R.id.chipAll)
@@ -419,6 +426,27 @@ class MainActivity : AppCompatActivity() {
         if (notificationPermissionHelper.hasNotificationPermission() && !viewModel.isBackgroundSyncEnabled()) {
             viewModel.setupBackgroundSync()
         }
+
+        // Resume ads
+        if (::adManager.isInitialized) {
+            adManager.resume()
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        // Pause ads
+        if (::adManager.isInitialized) {
+            adManager.pause()
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // Clean up ads
+        if (::adManager.isInitialized) {
+            adManager.destroy()
+        }
     }
 
     private fun showSettingsDialog() {
@@ -440,6 +468,15 @@ class MainActivity : AppCompatActivity() {
                     notificationPermissionHelper.requestNotificationPermission()
                 }
             }
+        }
+
+        // Ad management toggle
+        val adsEnabled = adManager.areAdsEnabled()
+        options.add(if (adsEnabled) "Disable Advertisements" else "Enable Advertisements")
+        actions.add {
+            adManager.setAdsEnabled(!adsEnabled)
+            val message = if (!adsEnabled) "Advertisements enabled" else "Advertisements disabled"
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
         }
 
         // Last sync time
@@ -540,5 +577,17 @@ class MainActivity : AppCompatActivity() {
         }
 
         builder.show()
+    }
+
+    private fun setupAds() {
+        adManager = AdManager(this)
+        adManager.initialize(adContainer)
+
+        // Show ads only if enabled in settings
+        if (adManager.areAdsEnabled()) {
+            adManager.showAd()
+        } else {
+            adManager.hideAd()
+        }
     }
 }

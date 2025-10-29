@@ -251,7 +251,8 @@ class MainActivity : AppCompatActivity() {
             // Permission granted - setup background sync
             viewModel.setupBackgroundSync()
             viewModel.enableBackgroundSync(true)
-            Toast.makeText(this, "Notifications enabled! You'll receive alerts for new episodes.", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Notifications enabled! You'll receive alerts for new episodes.", Toast.LENGTH_LONG)
+                .show()
         } else {
             // Permission denied - still allow manual checking
             notificationPermissionHelper.showPermissionDeniedDialog()
@@ -270,24 +271,29 @@ class MainActivity : AppCompatActivity() {
                 openSavedTitlesActivity()
                 true
             }
+
             R.id.action_refresh -> {
                 viewModel.refreshRssFeed()
                 Toast.makeText(this, "Refreshing anime RSS feed...", Toast.LENGTH_SHORT).show()
                 true
             }
+
             R.id.action_sync_now -> {
                 viewModel.forceSyncNow()
                 Toast.makeText(this, "Starting background sync...", Toast.LENGTH_SHORT).show()
                 true
             }
+
             R.id.action_notifications -> {
                 showNotificationSettingsDialog()
                 true
             }
+
             R.id.action_settings -> {
                 showSettingsDialog()
                 true
             }
+
             else -> super.onOptionsItemSelected(item)
         }
     }
@@ -487,10 +493,36 @@ class MainActivity : AppCompatActivity() {
         } else {
             "Never synced"
         }
+
+        // Force sync now
         options.add("Force Sync Now")
         actions.add {
             viewModel.forceSyncNow()
-            Toast.makeText(this, "Starting background sync...", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Background sync triggered! Check logs for details.", Toast.LENGTH_LONG).show()
+        }
+
+        // View sync status
+        options.add("View Sync Status")
+        actions.add {
+            showSyncStatusDialog()
+        }
+
+        // Clear episode history
+        options.add("Clear Episode History")
+        actions.add {
+            androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Clear Episode History?")
+                .setMessage("This will clear the record of previously seen episodes. The next sync will treat all current episodes as new and may send notifications for them.\n\nThis is useful for testing notifications.")
+                .setPositiveButton("Clear") { _, _ ->
+                    viewModel.clearEpisodeHistory(this)
+                    Toast.makeText(
+                        this,
+                        "Episode history cleared. Next sync will detect all episodes as new.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
         }
 
         // Test notification
@@ -512,9 +544,12 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        // Add last sync info as the first item in the list
+        options.add(0, lastSyncText)
+        actions.add(0) { /* No action for info item */ }
+
         androidx.appcompat.app.AlertDialog.Builder(this)
             .setTitle("Settings")
-            .setMessage(lastSyncText)
             .setItems(options.toTypedArray()) { _, which ->
                 actions[which].invoke()
             }
@@ -526,12 +561,22 @@ class MainActivity : AppCompatActivity() {
         val hasPermission = notificationPermissionHelper.hasNotificationPermission()
         val isEnabled = notificationPermissionHelper.areNotificationsEnabled()
         val syncEnabled = viewModel.isBackgroundSyncEnabled()
+        val lastSync = viewModel.getLastSyncTime()
+        val savedTitles = viewModel.savedTitles.value ?: emptyList()
 
         val message = buildString {
             append("Notification Status:\n")
             append("• Permission: ${if (hasPermission) "Granted" else "Denied"}\n")
             append("• System Enabled: ${if (isEnabled) "Yes" else "No"}\n")
-            append("• Background Sync: ${if (syncEnabled) "Enabled" else "Disabled"}\n\n")
+            append("• Background Sync: ${if (syncEnabled) "Enabled" else "Disabled"}\n")
+            append("• Saved Titles: ${savedTitles.size}\n")
+            if (lastSync > 0) {
+                val format = SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault())
+                append("• Last Sync: ${format.format(Date(lastSync))}\n")
+            } else {
+                append("• Last Sync: Never\n")
+            }
+            append("\n")
 
             if (!hasPermission || !isEnabled) {
                 append("Enable notifications to receive alerts about new episodes of your favorite anime series.")
@@ -565,6 +610,35 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        // Debug options
+        options.add("Force Sync Now")
+        actions.add {
+            viewModel.forceSyncNow()
+            Toast.makeText(this, "Background sync triggered! Check logs for details.", Toast.LENGTH_LONG).show()
+        }
+
+        options.add("View Sync Status")
+        actions.add {
+            showSyncStatusDialog()
+        }
+
+        options.add("Clear Episode History")
+        actions.add {
+            androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Clear Episode History?")
+                .setMessage("This will clear the record of previously seen episodes. The next sync will treat all current episodes as new and may send notifications for them.\n\nThis is useful for testing notifications.")
+                .setPositiveButton("Clear") { _, _ ->
+                    viewModel.clearEpisodeHistory(this)
+                    Toast.makeText(
+                        this,
+                        "Episode history cleared. Next sync will detect all episodes as new.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
+        }
+
         val builder = androidx.appcompat.app.AlertDialog.Builder(this)
             .setTitle("Notification Settings")
             .setMessage(message)
@@ -589,5 +663,58 @@ class MainActivity : AppCompatActivity() {
         } else {
             adManager.hideAd()
         }
+    }
+
+    private fun showSyncStatusDialog() {
+        val lastSyncTime = viewModel.getLastSyncTime()
+        val syncEnabled = viewModel.isBackgroundSyncEnabled()
+        val savedTitles = viewModel.savedTitles.value ?: emptyList()
+        val hasPermission = notificationPermissionHelper.hasNotificationPermission()
+
+        val message = buildString {
+            append("Background Sync Status:\n\n")
+            append("• Enabled: ${if (syncEnabled) "Yes" else "No"}\n")
+            append("• Notification Permission: ${if (hasPermission) "Granted" else "Denied"}\n")
+            append("• Saved Titles: ${savedTitles.size}\n")
+            if (savedTitles.isNotEmpty()) {
+                append("\nTracked Series:\n")
+                savedTitles.take(10).forEach { title ->
+                    append("  - ${title.title}\n")
+                }
+                if (savedTitles.size > 10) {
+                    append("  ... and ${savedTitles.size - 10} more\n")
+                }
+            }
+            append("\n")
+            if (lastSyncTime > 0) {
+                val date = java.text.SimpleDateFormat("MMM dd, yyyy HH:mm:ss", java.util.Locale.getDefault())
+                    .format(java.util.Date(lastSyncTime))
+                append("Last Sync: $date\n")
+            } else {
+                append("Last Sync: Never\n")
+            }
+            append("\nTips:\n")
+            if (!hasPermission) {
+                append("• Grant notification permission for alerts\n")
+            }
+            if (savedTitles.isEmpty()) {
+                append("• Add anime series to your favorites\n")
+            }
+            if (!syncEnabled) {
+                append("• Enable background sync in settings\n")
+            }
+            append("• Use 'Force Sync Now' to test immediately\n")
+            append("• Check Logcat for 'RssCheckWorker' logs\n")
+        }
+
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Sync Status")
+            .setMessage(message)
+            .setPositiveButton("Force Sync Now") { _, _ ->
+                viewModel.forceSyncNow()
+                Toast.makeText(this, "Sync triggered! Check notifications.", Toast.LENGTH_LONG).show()
+            }
+            .setNegativeButton("Close", null)
+            .show()
     }
 }

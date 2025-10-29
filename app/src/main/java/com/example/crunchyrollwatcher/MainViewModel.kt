@@ -250,4 +250,19 @@ class MainViewModel(context: Context) : ViewModel() {
         }
     }
 
+    fun clearEpisodeHistory(context: Context) {
+        viewModelScope.launch {
+            try {
+                val prefs = context.getSharedPreferences("rss_check_prefs", Context.MODE_PRIVATE)
+                prefs.edit()
+                    .remove(RssCheckWorker.LAST_CHECK_PREF_KEY)
+                    .remove(RssCheckWorker.LAST_EPISODE_IDS_KEY)
+                    .apply()
+                android.util.Log.d("MainViewModel", "Episode history cleared")
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to clear episode history: ${e.message}"
+            }
+        }
+    }
+
 }
